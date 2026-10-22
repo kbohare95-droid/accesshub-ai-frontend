@@ -7,7 +7,7 @@ const base=resolve(dirname(fileURLToPath(import.meta.url)),"..");
 const read=rel=>readFileSync(resolve(base,rel),"utf8");
 const manifest=JSON.parse(read("manifest.json"));
 assert.equal(manifest.manifest_version,3);
-assert.equal(manifest.version,"0.2.0");
+assert.equal(manifest.version,"0.3.0");
 assert.deepEqual(manifest.host_permissions,["https://eoagdssuvjzlsslriovv.supabase.co/*"]);
 assert(["activeTab","scripting","storage","tts"].every(p=>manifest.permissions.includes(p)));
 assert(!manifest.permissions.some(p=>["history","webRequest","tabs","debugger"].includes(p)));

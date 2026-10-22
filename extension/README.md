@@ -84,3 +84,9 @@ This runs static manifest validation, JS parse checks and a mocked DOM test that
 - `/rest/v1/extension_devices` stores device ID, device/browser name, extension version, and time last clicked or synced.
 - Consent-based AI via the existing authenticated `/functions/v1/accesshub-ai` Edge Function.
 - Optional cloud save uses the existing RLS-protected `notes` and `form_sessions` tables.
+
+## v0.3 update
+
+Reload this folder in `chrome://extensions` after downloading the updated repository. Page controls now include **One-click large green text**, font choice, custom colours and spectrum adjustment. Save site settings, then use Apply saved on future visits. Size changes apply to fixed-pixel text as well as relative text, up to 250%; reset restores modified properties. Spectrum presets are adjustable hue shifts, not medically validated colour correction. Exact custom colours override spectrum shifts.
+
+Read & AI offers 23 target languages. Choose Hindi → Translate → approve the AI request → Analyze → **Speak translated / AI result** for Hindi output. Speak alone reads the original input. A matching installed voice is required; the extension reports missing voices instead of silently selecting English. Voice, rate, pitch and language settings are saved locally.

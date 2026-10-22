@@ -1,6 +1,7 @@
 "use strict";
 const core=AccessHubCore;
 const $=id=>document.getElementById(id);
+let resultLanguage="en";
 let currentTab=null,formScan=null,answers={},pendingFill=null,settings=null;
 const defaultSettings=()=>({size:100,spacing:1.5,letter:0,contrast:false,dark:false,motion:false,links:false,images:false,ruler:false,focus:false});
 function notice(message,isError=false){
@@ -26,6 +27,9 @@ async function currentSettings(){
 }
 function syncSettings(s){
  settings=s||defaultSettings();
+ for(const id of ["colorMode","hue","strength","textColor","backgroundColor","linkColor","fontFamily"])if(settings[id]!==undefined)$(id).value=settings[id];
+ $("customColors").checked=!!settings.customColors;
+ text($("hue-value"),$("hue").value+"°");text($("strength-value"),$("strength").value+"%");
  for(const b of document.querySelectorAll("[data-toggle]")){
   const on=!!settings[b.dataset.toggle];b.setAttribute("aria-pressed",String(on));
   b.classList.toggle("on",on);
@@ -98,8 +102,8 @@ async function applyDefault(){
   if(!list?.length)throw Error("No default dashboard profile found. Save one in Accessibility Profiles.");
   const p=list[0].settings||{};
   await apply({action:"set",settings:{
-   size:p.fontSize||100,letter:p.letterSpacing||0,spacing:p.lineSpacing||1.5,
-   contrast:p.contrast==="high",dark:p.theme==="dark",motion:p.motion==="reduced"
+   ...(p.visual||{}),size:p.visual?.size||p.fontSize||100,letter:p.visual?.letter??p.letterSpacing??0,spacing:p.visual?.spacing??p.lineSpacing??1.5,
+   contrast:p.visual?.contrast??(p.contrast==="high"),dark:p.visual?.dark??(p.theme==="dark"),motion:p.visual?.motion??(p.motion==="reduced")
   }});
   await core.ping();notice("Your saved default AccessHub profile is applied on this tab.");
  }catch(e){error(e)}
@@ -119,7 +123,9 @@ async function analyze(){
  if(!$("cloud-consent").checked)return notice("Tick the cloud-processing consent checkbox first.",true);
  $("analyze").disabled=true;$("answer-panel").hidden=true;
  try{
-  const r=await core.ai(content,$("operation").value,$("language").value);
+  const requestedLanguage=$("language").value;
+  const r=await core.ai(content,$("operation").value,requestedLanguage);
+  resultLanguage=requestedLanguage;
   text($("ai-answer"),r.text||"The AI returned an empty response.");
   $("answer-panel").hidden=false;
   $("cloud-consent").checked=false;
@@ -208,14 +214,31 @@ async function saveDraft(){
   notice("The reviewed draft is saved privately in your AccessHub account.");
  }catch(e){error(e)}finally{$("save-draft").disabled=false}
 }
-async function speak(){
- const value=$("selected-text").value.trim();if(!value)return notice("No text to speak",true);
- try{await chrome.tts.speak(value.slice(0,15000),{rate:1.0,lang:$("language").value==="hi"?"hi-IN":"en-IN",enqueue:false});notice("Reading selected text aloud.")}
- catch(e){error(e)}
+async function loadVoices(){
+ const voices=await chrome.tts.getVoices();const lang=$("language").value;
+ $("voice").replaceChildren(new Option("Automatic matching voice",""));
+ for(const v of voices.filter(v=>v.lang?.split(/[-_]/)[0]===lang))$("voice").appendChild(new Option(v.voiceName,v.voiceName));
+}
+async function speak(result=false){
+ const value=(result?$("ai-answer").textContent:$("selected-text").value).trim();
+ if(!value)return notice("No text to speak",true);
+ const code=result?resultLanguage:$("language").value;
+ const language=globalThis.AccessHubLanguages.find(x=>x.code===code);
+ try{
+  const voices=await chrome.tts.getVoices();
+  const matching=voices.filter(v=>v.lang?.split(/[-_]/)[0]===code);
+  const voice=matching.find(v=>v.voiceName===$("voice").value)||matching[0];
+  if(!voice)throw Error("No "+language.name+" voice is installed. Add that language's speech voice in your operating system, then reopen the extension.");
+  chrome.tts.speak(value.slice(0,15000),{rate:Number($("rate").value),pitch:Number($("pitch").value),lang:voice.lang,voiceName:voice.voiceName,enqueue:false,onEvent:e=>{if(e.type==='error')notice(e.errorMessage||'Speech failed',true)}},()=>{if(chrome.runtime.lastError)error(chrome.runtime.lastError)});
+  notice("Reading "+(result?"AI result":"original text")+" with a "+language.name+" voice. Use Translate first to change the text language.");
+ }catch(e){error(e)}
 }
 async function boot(){
  try{
   await core.init();
+  const savedSpeech=(await chrome.storage.local.get("ah_speech")).ah_speech||{};
+  for(const id of ["language","rate","pitch"])if(savedSpeech[id]!==undefined)$(id).value=savedSpeech[id];
+  await loadVoices();if(savedSpeech.voice)$("voice").value=savedSpeech.voice;
   const [t]=await chrome.tabs.query({active:true,currentWindow:true});
   currentTab=t||null;
   text($("site-name"),t?.url&&/^https?:/.test(t.url)?new URL(t.url).hostname:"Open a normal webpage");
@@ -243,7 +266,9 @@ $("default-profile").addEventListener("click",applyDefault);
 $("get-selection").addEventListener("click",selected);
 $("save-reading").addEventListener("click",async()=>{try{await core.saveReading($("selected-text").value);notice("Selected text saved to your private reading list.")}catch(e){error(e)}});
 $("copy-selection").addEventListener("click",()=>navigator.clipboard.writeText($("selected-text").value).then(()=>notice("Copied to clipboard")).catch(error));
-$("speak").addEventListener("click",speak);
+$("speak").addEventListener("click",()=>speak(false));
+$("speak-answer").addEventListener("click",()=>speak(true));
+$("language").addEventListener("change",()=>loadVoices().catch(error));
 $("pause-speech").addEventListener("click",()=>{chrome.tts.pause();notice("Speech paused")});
 $("resume-speech").addEventListener("click",()=>{chrome.tts.resume();notice("Speech resumed")});
 $("stop-speech").addEventListener("click",()=>{chrome.tts.stop();notice("Speech stopped")});
@@ -254,4 +279,7 @@ $("scan-form").addEventListener("click",scan);
 $("confirm-fill").addEventListener("click",fill);
 $("save-draft").addEventListener("click",saveDraft);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("fill-preview").hidden){pendingFill=null;$("fill-preview").hidden=true;$("confirm-fill").hidden=true}});
+for(const id of ["colorMode","hue","strength","textColor","backgroundColor","linkColor","fontFamily","customColors"])$(id).addEventListener("change",()=>apply({action:"set",settings:{...(id==="colorMode"?{customColors:false}:{}),[id]:id==="customColors"?$(id).checked:$(id).value}}));
+$("easy-read").addEventListener("click",()=>apply({action:"set",settings:{size:150,customColors:true,textColor:"#14532d",backgroundColor:"#fffdf5",linkColor:"#1d4ed8",spacing:1.8,motion:true}}));
+for(const id of ["language","rate","pitch","voice"])$(id).addEventListener("change",()=>chrome.storage.local.set({ah_speech:{language:$("language").value,rate:$("rate").value,pitch:$("pitch").value,voice:$("voice").value}}).catch(error));
 boot();

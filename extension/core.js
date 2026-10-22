@@ -104,7 +104,7 @@ const AccessHubCore=(()=>{
   await ping();
   return authenticated("/functions/v1/accesshub-ai",{method:"POST",body:{
    action:"respond",operation,prompt:tasks[operation],
-   context:source,language:language==="hi"?"Hindi":"English",consent:true
+   context:source,language:(globalThis.AccessHubLanguages.find(x=>x.code===language)?.name||"English"),consent:true
   }});
  }
  async function saveNote(title,body){

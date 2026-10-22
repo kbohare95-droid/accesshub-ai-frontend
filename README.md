@@ -68,3 +68,19 @@ See `extension/README.md` for Developer Mode loading in Chrome/Edge; this is an 
 10. Configure Gemini key rotation if any screenshot has exposed a key.
 
 This README distinguishes **implemented** from **extension-dependent / provider-dependent / planned** features.
+
+## Appearance and languages (v0.3)
+
+Use **Aa · Customize** anywhere in the website, including sign-in, or the extension's **Page** tab. One-click large green text, 80–250% text size (including fixed-pixel text), font family, spacing, exact text/background/link colours, spectrum rotation/strength, grayscale, motion controls and reset are available. Website preferences persist locally; profiles include the visual settings. Extension preferences can be saved per site and applied with **Apply saved** after navigation. Custom colours take precedence over spectrum changes. Red/green/blue distinction presets are adjustable hue shifts, not clinical colour-vision correction or validated daltonization. Images, closed shadow DOM and cross-origin frames do not gain editable text.
+
+23 AI target languages: English, Hindi, Bengali, Marathi, Tamil, Telugu, Gujarati, Kannada, Malayalam, Punjabi, Urdu, Odia, Assamese, Nepali, Sanskrit, Spanish, French, German, Arabic, Portuguese, Japanese, Korean and Chinese. This translates user content; it does not translate every dashboard label. The web header and reading, communication and caption language selections share a saved preference.
+
+For Hindi audio from English text, select Hindi, approve cloud processing, then **Translate & speak** in Reading Workspace or Communication Board. In the extension, Translate with Gemini then **Speak translated / AI result**. Merely changing the voice language does not translate original text. Voice choice, speed and pitch are adjustable. Missing language voices produce an explicit message; install the matching OS voice. AI languages do not guarantee installed speech/recognition support. Live transcription still follows the spoken source; translation is a separate text operation.
+
+### Verification
+
+- `npm run build`
+- `node extension/tests/check.mjs`
+- With Playwright and a Chromium browser installed, start `npm run dev -- --host 127.0.0.1`, then run `node tests/browser.cjs`. Set `CHROMIUM_EXECUTABLE_PATH` if needed.
+
+The browser suite exercises fixed/nested/new text, repeated application, exact colours, spectrum, reset, persistence, mobile panel bounds, Hindi speech routing, Tamil requests, shared language and extension popup/site settings. Its Gemini responses, voices and Chrome extension APIs are mocked. It does not establish actual Gemini translation quality, audible OS voice quality, signed-in production CRUD, installed-extension permissions, screen-reader compatibility, or compatibility with every external website.

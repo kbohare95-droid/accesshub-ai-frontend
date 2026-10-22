@@ -2,46 +2,52 @@
 "use strict";
 function ahApplySettings(command){
  const root=document.documentElement;
- const id="accesshub-extension-override";
- const rulerId="accesshub-extension-ruler";
- const base={size:100,spacing:1.5,letter:0,contrast:false,dark:false,motion:false,links:false,images:false,ruler:false,focus:false};
- let state=base;
- try{state={...base,...JSON.parse(root.dataset.accesshubPrefs||"{}")}}catch{}
+ const base={size:100,spacing:1.5,letter:0,contrast:false,dark:false,motion:false,links:false,images:false,ruler:false,focus:false,colorMode:'none',hue:0,strength:100,customColors:false,textColor:'#14532d',backgroundColor:'#fffdf5',linkColor:'#1d4ed8',fontFamily:'original'};
+ const runtime=globalThis.__ahRuntime||(globalThis.__ahRuntime={originals:new Map(),observer:null,timer:null,state:base});
+ let state={...base,...runtime.state};
  const action=command?.action;
- if(action==="set"){
-  const proposed=command.settings||{};
-  const bools=["contrast","dark","motion","links","images","ruler","focus"];
-  for(const k of bools)if(typeof proposed[k]==="boolean")state[k]=proposed[k];
-  if(Number.isFinite(+proposed.size))state.size=Math.max(80,Math.min(175,Math.round(+proposed.size)));
-  if(Number.isFinite(+proposed.spacing))state.spacing=Math.max(1.1,Math.min(2.5,+proposed.spacing));
-  if(Number.isFinite(+proposed.letter))state.letter=Math.max(0,Math.min(4,+proposed.letter));
- }else if(action==="toggle"&&["contrast","dark","motion","links","images","ruler","focus"].includes(command.key)){
-  state[command.key]=!state[command.key];
- }else if(action==="size")state.size=Math.min(175,Math.max(80,state.size+Number(command.delta||0)));
- else if(action==="reset")state={...base};
- let style=document.getElementById(id);
- if(!style){style=document.createElement("style");style.id=id;document.documentElement.appendChild(style)}
- const rules=[
-  "html{font-size:"+state.size+"%!important;}",
-  "body{line-height:"+state.spacing+"!important;letter-spacing:"+state.letter+"px!important;}",
-  state.contrast?"html{filter:contrast(1.3)!important;}":"",
-  state.dark?"html{color-scheme:dark!important;}body{background:#1c2027!important;color:#f6f0e6!important;}":"",
-  state.motion?"html *,html *::before,html *::after{animation-duration:0.001ms!important;transition-duration:0.001ms!important;scroll-behavior:auto!important;}":"",
-  state.links?"a[href]{outline:2px solid #d28433!important;outline-offset:3px!important;text-decoration:underline!important;}":"",
-  state.images?"img,video,picture,canvas{visibility:hidden!important;}":"",
-  state.focus?"main,article,[role=main]{max-width:min(100%,850px)!important;margin-inline:auto!important;}":"",
-  state.ruler?"#"+rulerId+"{display:block!important;}":"#"+rulerId+"{display:none!important;}"
- ];
- style.textContent=rules.join("\n");
- let ruler=document.getElementById(rulerId);
- if(state.ruler&&!ruler){
-  ruler=document.createElement("div");ruler.id=rulerId;
-  ruler.setAttribute("aria-hidden","true");
-  ruler.style.cssText="pointer-events:none;position:fixed;z-index:2147483646;top:44vh;left:0;width:100%;height:2.6rem;border-top:2px solid #d39452;border-bottom:2px solid #d39452;background:rgba(255,240,174,.15)";
-  document.documentElement.appendChild(ruler);
+ const proposed=command?.settings||{};
+ if(action==='reset')state={...base};
+ if(action==='set'){
+  for(const k of ['contrast','dark','motion','links','images','ruler','focus','customColors'])if(typeof proposed[k]==='boolean')state[k]=proposed[k];
+  for(const [k,min,max] of [['size',80,250],['spacing',1.1,3],['letter',0,8],['hue',-180,180],['strength',0,100]])if(proposed[k]!==undefined&&Number.isFinite(Number(proposed[k])))state[k]=Math.min(max,Math.max(min,Number(proposed[k])));
+  for(const k of ['textColor','backgroundColor','linkColor'])if(/^#[0-9a-f]{6}$/i.test(proposed[k]||''))state[k]=proposed[k];
+  if(['none','protan','deutan','tritan','custom','gray'].includes(proposed.colorMode))state.colorMode=proposed.colorMode;
+  if(['original','sans','serif','mono'].includes(proposed.fontFamily))state.fontFamily=proposed.fontFamily;
  }
- if(action==="reset"){style.remove();ruler?.remove();delete root.dataset.accesshubPrefs;}
- else root.dataset.accesshubPrefs=JSON.stringify(state);
+ if(action==='toggle'&&typeof base[command.key]==='boolean')state[command.key]=!state[command.key];
+ if(action==='size')state.size=Math.max(80,Math.min(250,state.size+(Number(command.delta)||0)));
+ runtime.observer?.disconnect();clearTimeout(runtime.timer);
+ // Restore only properties owned by AccessHub; preserve unrelated page edits.
+ for(const [el,props] of runtime.originals){for(const [key,old] of Object.entries(props)){if(el.style.getPropertyValue(key)===old.applied){if(old.value)el.style.setProperty(key,old.value,old.priority);else el.style.removeProperty(key)}}}
+ runtime.originals.clear();
+ document.getElementById('accesshub-extension-override')?.remove();
+ document.getElementById('accesshub-extension-ruler')?.remove();
+ runtime.state=state;
+ if(action==='reset'){delete root.dataset.accesshubPrefs;return state;}
+ const set=(el,key,value)=>{let props=runtime.originals.get(el);if(!props){props={};runtime.originals.set(el,props)}props[key]={value:el.style.getPropertyValue(key),priority:el.style.getPropertyPriority(key),applied:''};el.style.setProperty(key,value,'important');props[key].applied=el.style.getPropertyValue(key)};
+ const elements=[...document.querySelectorAll('body,body *')].filter(el=>el instanceof HTMLElement&&!['SCRIPT','STYLE','NOSCRIPT'].includes(el.tagName)&&!el.closest('[data-ah-controls]'));
+ // Measure all sizes before writing so nested elements do not multiply scaling.
+ const measured=elements.map(el=>[el,parseFloat(getComputedStyle(el).fontSize)]);
+ for(const [el,size] of measured){
+  if(state.size!==100&&Number.isFinite(size))set(el,'font-size',size*state.size/100+'px');
+  if(state.spacing!==base.spacing)set(el,'line-height',String(state.spacing));
+  if(state.letter)set(el,'letter-spacing',state.letter+'px');
+  if(state.fontFamily!=='original')set(el,'font-family',{sans:'Arial, sans-serif',serif:'Georgia, serif',mono:'monospace'}[state.fontFamily]);
+  if(state.customColors||state.dark){set(el,'color',state.customColors?(el.closest('a[href]')?state.linkColor:state.textColor):'#f6f0e6');set(el,'background-color',state.customColors?state.backgroundColor:'#1c2027');}
+ }
+ const angle={protan:45,deutan:-45,tritan:90,custom:state.hue}[state.colorMode]||0;
+ const filters=[];
+ // Custom colours retain their exact selected values; spectrum modes affect originals.
+ if(!state.customColors){if(state.colorMode==='gray')filters.push('grayscale('+state.strength/100+')');else if(angle)filters.push('hue-rotate('+angle*state.strength/100+'deg)');}
+ if(state.contrast)filters.push('contrast(1.3)');
+ if(filters.length&&document.body)set(document.body,'filter',filters.join(' '));
+ const style=document.createElement('style');style.id='accesshub-extension-override';
+ style.textContent=[state.motion?'*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}':'',state.links?'a[href]{outline:2px solid #d28433!important;outline-offset:3px!important;text-decoration:underline!important}':'',state.images?'img,video,picture,canvas{visibility:hidden!important}':'',state.focus?'main,article,[role=main]{max-width:min(100%,850px)!important;margin-inline:auto!important}':''].join('\n');root.appendChild(style);
+ if(state.ruler){const ruler=document.createElement('div');ruler.id='accesshub-extension-ruler';ruler.setAttribute('aria-hidden','true');ruler.style.cssText='pointer-events:none;position:fixed;z-index:2147483646;top:44vh;left:0;width:100%;height:2.6rem;border-block:2px solid #d39452;background:rgba(255,240,174,.15)';root.appendChild(ruler)}
+ root.dataset.accesshubPrefs=JSON.stringify(state);
+ runtime.observer=new MutationObserver(records=>{if(records.some(r=>r.addedNodes.length)){clearTimeout(runtime.timer);runtime.timer=setTimeout(()=>ahApplySettings({action:'set',settings:runtime.state}),80)}});
+ runtime.observer.observe(document.body,{childList:true,subtree:true});
  return state;
 }
 function ahReadSelection(){
@@ -100,3 +106,5 @@ function ahFillFormField(input){
  el.dispatchEvent(new Event("change",{bubbles:true}));
  return {ok:true,message:"Filled one field. Review the form before submitting."};
 }
+
+globalThis.ahApplySettings=ahApplySettings;
