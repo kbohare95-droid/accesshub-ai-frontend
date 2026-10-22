@@ -25,6 +25,10 @@ const assert=require('node:assert/strict');
  });
  await page.getByLabel('Reading ruler',{exact:true}).check();
  await page.waitForTimeout(250);
+ console.log('RULER DEBUG',await page.evaluate(()=>{
+  const p=document.querySelector('#ruler-fixture'),lens=document.querySelector('#accesshub-reading-magnifier'),y=innerHeight*.44+25;
+  return {y,p:p?.getBoundingClientRect().toJSON(),lensDisplay:lens?.style.display,lensText:lens?.textContent,hits:document.elementsFromPoint(innerWidth*.5,y).slice(0,7).map(e=>({tag:e.tagName,id:e.id,cls:String(e.className).slice(0,50)})),ruler:!!document.querySelector('#accesshub-extension-ruler')};
+ }));
  assert.equal(await page.locator('#accesshub-reading-magnifier').isVisible(),true,'Reading ruler should magnify the text intersecting its fixed position');
  assert.match(await page.locator('#accesshub-reading-magnifier').innerText(),/Reading accessibility line/);
  await page.getByLabel('Reading ruler',{exact:true}).uncheck();
