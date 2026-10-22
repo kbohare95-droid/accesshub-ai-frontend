@@ -38,6 +38,8 @@ function ahApplySettings(command){
  runtime.originals.clear();
  document.getElementById('accesshub-extension-override')?.remove();
  document.getElementById('accesshub-extension-ruler')?.remove();
+ document.getElementById('accesshub-reading-magnifier')?.remove();
+ if(runtime.readingMove){document.removeEventListener('pointermove',runtime.readingMove);runtime.readingMove=null;}
  runtime.state=state;
  if(action==='reset'){delete root.dataset.accesshubPrefs;return state;}
  const set=(el,key,value)=>{let props=runtime.originals.get(el);if(!props){props={};runtime.originals.set(el,props)}props[key]={value:el.style.getPropertyValue(key),priority:el.style.getPropertyPriority(key),applied:''};el.style.setProperty(key,value,'important');props[key].applied=el.style.getPropertyValue(key)};
@@ -59,7 +61,30 @@ function ahApplySettings(command){
  if(filters.length&&document.body)set(document.body,'filter',filters.join(' '));
  const style=document.createElement('style');style.id='accesshub-extension-override';
  style.textContent=[state.motion?'*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}':'',state.links?'a[href]{outline:2px solid #d28433!important;outline-offset:3px!important;text-decoration:underline!important}':'',state.images?'img,video,picture,canvas{visibility:hidden!important}':'',state.focus?'main,article,[role=main]{max-width:min(100%,850px)!important;margin-inline:auto!important}':''].join('\n');root.appendChild(style);
- if(state.ruler){const ruler=document.createElement('div');ruler.id='accesshub-extension-ruler';ruler.setAttribute('aria-hidden','true');ruler.style.cssText='pointer-events:none;position:fixed;z-index:2147483646;top:44vh;left:0;width:100%;height:2.6rem;border-block:2px solid #d39452;background:rgba(255,240,174,.15)';root.appendChild(ruler)}
+ if(state.ruler){const ruler=document.createElement('div');ruler.id='accesshub-extension-ruler';ruler.setAttribute('aria-hidden','true');ruler.style.cssText='pointer-events:none;position:fixed;z-index:2147483646;top:44vh;left:0;width:100%;height:2.6rem;border-block:2px solid #d39452;background:rgba(255,240,174,.15)';root.appendChild(ruler);
+  // Follow the current reading line without altering page layout or intercepting clicks.
+  const lens=document.createElement('div');lens.id='accesshub-reading-magnifier';lens.setAttribute('aria-hidden','true');
+  lens.style.cssText='position:fixed;z-index:2147483647;pointer-events:none;display:none;max-width:min(85vw,900px);padding:10px 18px;border:2px solid #d39452;border-radius:12px;background:#fffdf5;color:#152447;font:600 24px/1.6 Arial,sans-serif;box-shadow:0 6px 24px #0004;overflow-wrap:anywhere;white-space:normal';
+  root.appendChild(lens);
+  let lastText='';
+  runtime.readingMove=event=>{
+   const target=document.elementFromPoint(event.clientX,event.clientY);
+   if(!target||target.closest('#accesshub-reading-magnifier')||target.closest('input,textarea,select,[contenteditable=true]')){lens.style.display='none';return}
+   const range=document.caretRangeFromPoint?.(event.clientX,event.clientY);
+   const node=range?.startContainer;
+   if(!node||node.nodeType!==Node.TEXT_NODE){lens.style.display='none';return}
+   const value=node.textContent||'';const offset=range.startOffset;
+   const start=Math.max(value.lastIndexOf('\n',offset-1)+1,value.lastIndexOf('.',offset-1)+1);
+   const next=value.indexOf('\n',offset);const end=next<0?value.length:next;
+   const line=value.slice(start,end).trim().slice(0,350);
+   if(!line){lens.style.display='none';return}
+   if(line!==lastText){lens.textContent=line;lastText=line}
+   lens.style.display='block';
+   lens.style.left=Math.max(8,Math.min(event.clientX-150,innerWidth-Math.min(700,innerWidth-16)))+'px';
+   lens.style.top=(event.clientY>innerHeight*.6?Math.max(8,event.clientY-110):Math.min(innerHeight-95,event.clientY+30))+'px';
+  };
+  document.addEventListener('pointermove',runtime.readingMove,{passive:true});
+ }
  root.dataset.accesshubPrefs=JSON.stringify(state);
  runtime.observer=new MutationObserver(records=>{if(records.some(r=>r.addedNodes.length)){clearTimeout(runtime.timer);runtime.timer=setTimeout(()=>ahApplySettings({action:'set',settings:runtime.state}),80)}});
  runtime.observer.observe(document.body,{childList:true,subtree:true});
