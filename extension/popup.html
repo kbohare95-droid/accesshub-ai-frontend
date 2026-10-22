@@ -42,7 +42,7 @@
    <button id="get-selection" class="wide action-light">Get selected text from this tab</button>
    <label class="stack" for="selected-text">Selected text (editable)</label>
    <textarea id="selected-text" rows="5" maxlength="12000" placeholder="Select and retrieve text, or paste it here"></textarea>
-   <div class="actions"><button class="ghost" id="copy-selection">Copy text</button><button class="ghost" id="speak">Speak</button><button class="ghost" id="pause-speech">Pause</button><button class="ghost" id="stop-speech">Stop</button></div>
+   <div class="actions"><button class="ghost" id="copy-selection">Copy text</button><button class="ghost" id="save-reading">Save to reading list</button><button class="ghost" id="speak">Speak</button><button class="ghost" id="pause-speech">Pause</button><button class="ghost" id="stop-speech">Stop</button></div>
    <label class="stack" for="language">AI response language</label><select id="language"><option value="en">English</option><option value="hi">Hindi</option></select>
    <label class="stack" for="operation">AI help</label><select id="operation"><option value="simplify">Simplify</option><option value="summarize">Summarize</option><option value="translate">Translate</option><option value="explain">Explain terms</option></select>
    <label class="consent"><input id="cloud-consent" type="checkbox"> I approve sending the selected text to Gemini for this request.</label>
@@ -53,7 +53,7 @@
    <h2>Guided form assistance</h2><p class="muted">Scan visible, non-sensitive fields only. No answers are read from the webpage; nothing is submitted.</p>
    <button id="scan-form" class="wide action-light">Scan current form</button>
    <div id="form-summary" class="tip" hidden></div>
-   <div id="form-fields" class="fields"></div>
+   <label class="consent"><input type="checkbox" id="form-cloud-consent"> Allow sending an individual field label to Gemini for explanation.</label><div id="form-explanation" class="answer" role="status" hidden></div><div id="form-fields" class="fields"></div>
    <div id="fill-preview" class="tip" hidden></div>
    <button id="confirm-fill" class="wide primary" hidden>Confirm filling this ONE field</button>
    <label class="consent"><input type="checkbox" id="draft-consent"> I approve saving my form draft to my AccessHub account.</label>
