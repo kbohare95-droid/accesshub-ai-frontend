@@ -10,6 +10,5 @@
   "action": {
     "default_title": "AccessHub site tools",
     "default_popup": "popup.html"
-  },
-  "icons": {}
+  }
 }
