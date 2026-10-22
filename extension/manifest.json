@@ -1,14 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "AccessHub AI – Site Accessibility",
-  "version": "0.1.0",
-  "description": "User-initiated reading and visual accessibility controls. No automatic browsing history collection.",
+  "name": "AccessHub AI — Accessible Web",
+  "short_name": "AccessHub AI",
+  "version": "0.2.0",
+  "minimum_chrome_version": "114",
+  "description": "User-controlled text-to-speech, visual accessibility, selected-text AI and safe form guidance. Access only after you click.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage",
+    "tts"
+  ],
+  "host_permissions": [
+    "https://eoagdssuvjzlsslriovv.supabase.co/*"
   ],
   "action": {
-    "default_title": "AccessHub site tools",
+    "default_title": "AccessHub AI — tools for this page",
     "default_popup": "popup.html"
-  }
+  },
+  "homepage_url": "https://accesshub-ai-frontend.vercel.app/"
 }
