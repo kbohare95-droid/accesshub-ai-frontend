@@ -62,26 +62,30 @@ function ahApplySettings(command){
  const style=document.createElement('style');style.id='accesshub-extension-override';
  style.textContent=[state.motion?'*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}':'',state.links?'a[href]{outline:2px solid #d28433!important;outline-offset:3px!important;text-decoration:underline!important}':'',state.images?'img,video,picture,canvas{visibility:hidden!important}':'',state.focus?'main,article,[role=main]{max-width:min(100%,850px)!important;margin-inline:auto!important}':''].join('\n');root.appendChild(style);
  if(state.ruler){const ruler=document.createElement('div');ruler.id='accesshub-extension-ruler';ruler.setAttribute('aria-hidden','true');ruler.style.cssText='pointer-events:none;position:fixed;z-index:2147483646;top:44vh;left:0;width:100%;height:2.6rem;border-block:2px solid #d39452;background:rgba(255,240,174,.15)';root.appendChild(ruler);
-  // Follow the current reading line without altering page layout or intercepting clicks.
+  // Magnify the actual rendered text line directly within the reading ruler.
   const lens=document.createElement('div');lens.id='accesshub-reading-magnifier';lens.setAttribute('aria-hidden','true');
-  lens.style.cssText='position:fixed;z-index:2147483647;pointer-events:none;display:none;max-width:min(85vw,900px);padding:10px 18px;border:2px solid #d39452;border-radius:12px;background:#fffdf5;color:#152447;font:600 24px/1.6 Arial,sans-serif;box-shadow:0 6px 24px #0004;overflow-wrap:anywhere;white-space:normal';
+  lens.style.cssText='position:fixed;z-index:2147483647;pointer-events:none;display:none;left:0;right:0;top:44vh;min-height:2.8rem;padding:5px 16px;text-align:center;background:#fffdf5;color:#152447;border-block:2px solid #d39452;font:600 24px/1.4 Arial,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 12px #0003';
   root.appendChild(lens);
-  let lastText='';
   runtime.readingMove=event=>{
-   const target=document.elementFromPoint(event.clientX,event.clientY);
-   if(!target||target.closest('#accesshub-reading-magnifier')||target.closest('input,textarea,select,[contenteditable=true]')){lens.style.display='none';return}
-   const range=document.caretRangeFromPoint?.(event.clientX,event.clientY);
+   const y=event.clientY;
+   const target=document.elementFromPoint(event.clientX,y);
+   if(!target||target.closest('input,textarea,select,[contenteditable=true]')){lens.style.display='none';return}
+   const range=document.caretRangeFromPoint?.(event.clientX,y);
    const node=range?.startContainer;
    if(!node||node.nodeType!==Node.TEXT_NODE){lens.style.display='none';return}
-   const value=node.textContent||'';const offset=range.startOffset;
-   const start=Math.max(value.lastIndexOf('\n',offset-1)+1,value.lastIndexOf('.',offset-1)+1);
-   const next=value.indexOf('\n',offset);const end=next<0?value.length:next;
-   const line=value.slice(start,end).trim().slice(0,350);
+   const content=node.textContent||'';
+   const offset=Math.min(range.startOffset,content.length);
+   // Browser layout rectangles identify the visual line, including wrapped paragraphs.
+   const chars=[];
+   for(let i=Math.max(0,offset-200);i<Math.min(content.length,offset+200);i++){
+    const r=document.createRange();r.setStart(node,i);r.setEnd(node,i+1);
+    const rect=r.getBoundingClientRect();
+    if(rect.height&&y>=rect.top-3&&y<=rect.bottom+3)chars.push(content[i]);
+   }
+   const line=chars.join('').replace(/\\s+/g,' ').trim().slice(0,300);
    if(!line){lens.style.display='none';return}
-   if(line!==lastText){lens.textContent=line;lastText=line}
-   lens.style.display='block';
-   lens.style.left=Math.max(8,Math.min(event.clientX-150,innerWidth-Math.min(700,innerWidth-16)))+'px';
-   lens.style.top=(event.clientY>innerHeight*.6?Math.max(8,event.clientY-110):Math.min(innerHeight-95,event.clientY+30))+'px';
+   lens.textContent=line;lens.style.display='block';
+   lens.style.top=Math.max(0,Math.min(innerHeight-70,y-28))+'px';
   };
   document.addEventListener('pointermove',runtime.readingMove,{passive:true});
  }
