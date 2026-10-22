@@ -25,7 +25,7 @@ function ahApplySettings(command){
    state.colorMode='none';state.dark=false;
    if(themes[proposed.theme])Object.assign(state,themes[proposed.theme]);
   }
-  if(proposed.theme==='custom')state.theme='custom';
+  if(proposed.theme==='custom'){state.theme='custom';state.customColors=true;}
   if(['textColor','backgroundColor','linkColor'].some(k=>typeof proposed[k]==='string')&&!proposed.theme)state.theme='custom';
   if(proposed.customColors===false&&proposed.theme!=='original')state.theme='original';
   if(['original','sans','serif','mono'].includes(proposed.fontFamily))state.fontFamily=proposed.fontFamily;
