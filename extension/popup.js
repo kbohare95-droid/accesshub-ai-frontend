@@ -3,7 +3,7 @@ const core=AccessHubCore;
 const $=id=>document.getElementById(id);
 let resultLanguage="en";
 let currentTab=null,formScan=null,answers={},pendingFill=null,settings=null;
-const defaultSettings=()=>({size:100,spacing:1.5,letter:0,contrast:false,dark:false,motion:false,links:false,images:false,ruler:false,focus:false});
+const defaultSettings=()=>({size:100,spacing:1.5,letter:0,contrast:false,dark:false,motion:false,links:false,images:false,ruler:false,focus:false,theme:'original',colorMode:'none',hue:0,strength:100,customColors:false,textColor:'#14532d',backgroundColor:'#fffdf5',linkColor:'#1d4ed8',fontFamily:'original'});
 function notice(message,isError=false){
  const box=$("alert");box.textContent=String(message);box.hidden=false;box.dataset.type=isError?"error":"info";
  $("state-foot").textContent=isError?"● Needs attention":"● Ready";
@@ -27,7 +27,7 @@ async function currentSettings(){
 }
 function syncSettings(s){
  settings=s||defaultSettings();
- for(const id of ["colorMode","hue","strength","textColor","backgroundColor","linkColor","fontFamily"])if(settings[id]!==undefined)$(id).value=settings[id];
+ for(const id of ["theme","colorMode","hue","strength","textColor","backgroundColor","linkColor","fontFamily"])if(settings[id]!==undefined)$(id).value=settings[id];
  $("customColors").checked=!!settings.customColors;
  text($("hue-value"),$("hue").value+"°");text($("strength-value"),$("strength").value+"%");
  for(const b of document.querySelectorAll("[data-toggle]")){
@@ -279,7 +279,7 @@ $("scan-form").addEventListener("click",scan);
 $("confirm-fill").addEventListener("click",fill);
 $("save-draft").addEventListener("click",saveDraft);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("fill-preview").hidden){pendingFill=null;$("fill-preview").hidden=true;$("confirm-fill").hidden=true}});
-for(const id of ["colorMode","hue","strength","textColor","backgroundColor","linkColor","fontFamily","customColors"])$(id).addEventListener("change",()=>apply({action:"set",settings:{...(id==="colorMode"?{customColors:false}:{}),[id]:id==="customColors"?$(id).checked:$(id).value}}));
-$("easy-read").addEventListener("click",()=>apply({action:"set",settings:{size:150,customColors:true,textColor:"#14532d",backgroundColor:"#fffdf5",linkColor:"#1d4ed8",spacing:1.8,motion:true}}));
+for(const id of ["theme","colorMode","hue","strength","textColor","backgroundColor","linkColor","fontFamily","customColors"])$(id).addEventListener("change",()=>apply({action:"set",settings:{...(id==="colorMode"?{customColors:false,theme:"original"}:{}),...(id==="customColors"?{theme:$(id).checked?"custom":"original"}:{}),...( ["textColor","backgroundColor","linkColor"].includes(id)?{theme:"custom",customColors:true}:{}),[id]:id==="customColors"?$(id).checked:$(id).value}}));
+$("easy-read").addEventListener("click",()=>apply({action:"set",settings:{size:130,theme:"cream",spacing:1.6,motion:true}}));
 for(const id of ["language","rate","pitch","voice"])$(id).addEventListener("change",()=>chrome.storage.local.set({ah_speech:{language:$("language").value,rate:$("rate").value,pitch:$("pitch").value,voice:$("voice").value}}).catch(error));
 boot();

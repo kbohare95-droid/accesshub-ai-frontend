@@ -2,7 +2,7 @@
 "use strict";
 function ahApplySettings(command){
  const root=document.documentElement;
- const base={size:100,spacing:1.5,letter:0,contrast:false,dark:false,motion:false,links:false,images:false,ruler:false,focus:false,colorMode:'none',hue:0,strength:100,customColors:false,textColor:'#14532d',backgroundColor:'#fffdf5',linkColor:'#1d4ed8',fontFamily:'original'};
+ const base={size:100,spacing:1.5,letter:0,contrast:false,dark:false,motion:false,links:false,images:false,ruler:false,focus:false,colorMode:'none',hue:0,strength:100,theme:'original',customColors:false,textColor:'#14532d',backgroundColor:'#fffdf5',linkColor:'#1d4ed8',fontFamily:'original'};
  const runtime=globalThis.__ahRuntime||(globalThis.__ahRuntime={originals:new Map(),observer:null,timer:null,state:base});
  let state={...base,...runtime.state};
  const action=command?.action;
@@ -10,13 +10,28 @@ function ahApplySettings(command){
  if(action==='reset')state={...base};
  if(action==='set'){
   for(const k of ['contrast','dark','motion','links','images','ruler','focus','customColors'])if(typeof proposed[k]==='boolean')state[k]=proposed[k];
-  for(const [k,min,max] of [['size',80,250],['spacing',1.1,3],['letter',0,8],['hue',-180,180],['strength',0,100]])if(proposed[k]!==undefined&&Number.isFinite(Number(proposed[k])))state[k]=Math.min(max,Math.max(min,Number(proposed[k])));
+  for(const [k,min,max] of [['size',90,150],['spacing',1.2,2.2],['letter',0,3],['hue',-180,180],['strength',0,100]])if(proposed[k]!==undefined&&Number.isFinite(Number(proposed[k])))state[k]=Math.min(max,Math.max(min,Number(proposed[k])));
   for(const k of ['textColor','backgroundColor','linkColor'])if(/^#[0-9a-f]{6}$/i.test(proposed[k]||''))state[k]=proposed[k];
   if(['none','protan','deutan','tritan','custom','gray'].includes(proposed.colorMode))state.colorMode=proposed.colorMode;
+  const themes={
+   original:null,cream:{textColor:'#14532d',backgroundColor:'#fffdf5',linkColor:'#1d4ed8'},
+   dark:{textColor:'#f7f5ed',backgroundColor:'#1c2027',linkColor:'#99c5ff'},
+   contrast:{textColor:'#ffff00',backgroundColor:'#080808',linkColor:'#78d4ff'},
+   blue:{textColor:'#152447',backgroundColor:'#fff9db',linkColor:'#064bab'},
+   mono:{textColor:'#111111',backgroundColor:'#ffffff',linkColor:'#003399'}
+  };
+  if(typeof proposed.theme==='string'&&Object.hasOwn(themes,proposed.theme)){
+   state.theme=proposed.theme;state.customColors=proposed.theme!=='original';
+   state.colorMode='none';state.dark=false;
+   if(themes[proposed.theme])Object.assign(state,themes[proposed.theme]);
+  }
+  if(proposed.theme==='custom')state.theme='custom';
+  if(['textColor','backgroundColor','linkColor'].some(k=>typeof proposed[k]==='string')&&!proposed.theme)state.theme='custom';
+  if(proposed.customColors===false&&proposed.theme!=='original')state.theme='original';
   if(['original','sans','serif','mono'].includes(proposed.fontFamily))state.fontFamily=proposed.fontFamily;
  }
  if(action==='toggle'&&typeof base[command.key]==='boolean')state[command.key]=!state[command.key];
- if(action==='size')state.size=Math.max(80,Math.min(250,state.size+(Number(command.delta)||0)));
+ if(action==='size')state.size=Math.max(90,Math.min(150,state.size+(Number(command.delta)||0)));
  runtime.observer?.disconnect();clearTimeout(runtime.timer);
  // Restore only properties owned by AccessHub; preserve unrelated page edits.
  for(const [el,props] of runtime.originals){for(const [key,old] of Object.entries(props)){if(el.style.getPropertyValue(key)===old.applied){if(old.value)el.style.setProperty(key,old.value,old.priority);else el.style.removeProperty(key)}}}

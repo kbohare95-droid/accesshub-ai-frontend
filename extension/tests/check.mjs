@@ -18,6 +18,9 @@ for(const asset of["popup.css","core.js","page-actions.js","popup.js"])
 assert(html.includes('id="cloud-consent"'));
 assert(html.includes('id="confirm-fill"'));
 assert(html.includes('id="draft-consent"'));
+assert(html.includes('id="theme"'));
+assert(read('page-actions.js').includes("[['size',90,150]"));
+assert(!read('page-actions.js').includes('80,250'));
 for(const file of["core.js","page-actions.js","popup.js"]){
  new vm.Script(read(file),{filename:file});
  console.log("✓ Script syntax:",file);

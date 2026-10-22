@@ -32,7 +32,8 @@
     <button class="control" data-toggle="focus" aria-pressed="false"><strong>◎</strong><span>Focus view</span></button>
     <button class="control" data-toggle="images" aria-pressed="false"><strong>▧</strong><span>Hide images</span></button>
    </div>
-   <button id="easy-read" class="wide primary">One-click large green text</button>
+   <button id="easy-read" class="wide primary">One-click comfortable green text</button>
+<label class="stack">Reading theme<select id="theme"><option value="original">Original website</option><option value="cream">Cream and green</option><option value="dark">Soft dark</option><option value="contrast">Yellow on black</option><option value="blue">Blue on warm white</option><option value="mono">Black on white</option><option value="custom">Your custom colours</option></select></label>
 <label class="stack">Colour assistance<select id="colorMode"><option value="none">Original spectrum</option><option value="protan">Red distinction aid</option><option value="deutan">Green distinction aid</option><option value="tritan">Blue / yellow distinction aid</option><option value="custom">Custom spectrum shift</option><option value="gray">Grayscale</option></select></label>
 <label class="stack">Spectrum rotation <input id="hue" type="range" min="-180" max="180" value="0"><output id="hue-value">0°</output></label>
 <label class="stack">Colour effect strength <input id="strength" type="range" min="0" max="100" value="100"><output id="strength-value">100%</output></label>
@@ -40,8 +41,8 @@
 <div class="two"><label>Text <input id="textColor" type="color" value="#14532d"></label><label>Background <input id="backgroundColor" type="color" value="#fffdf5"></label><label>Links <input id="linkColor" type="color" value="#1d4ed8"></label></div>
 <label class="stack">Font family<select id="fontFamily"><option value="original">Original</option><option value="sans">Sans serif</option><option value="serif">Serif</option><option value="mono">Monospace</option></select></label>
 <p class="muted">Adjustable colour aids, not a vision correction. Spectrum shifts affect page graphics too. Reset restores original styles.</p>
-<label class="stack">Line spacing <input id="spacing" type="range" min="1.1" max="2.5" value="1.5" step=".1"><output id="spacing-value">1.5</output></label>
-   <label class="stack">Letter spacing <input id="letter" type="range" min="0" max="4" value="0" step=".5"><output id="letter-value">0</output></label>
+<label class="stack">Line spacing <input id="spacing" type="range" min="1.1" max="2.2" value="1.5" step=".1"><output id="spacing-value">1.5</output></label>
+   <label class="stack">Letter spacing <input id="letter" type="range" min="0" max="3" value="0" step=".5"><output id="letter-value">0</output></label>
    <div class="actions"><button id="reset" class="ghost">Reset page</button><button id="save-site" class="ghost">Save site settings</button><button id="apply-site" class="ghost">Apply saved</button><button id="forget-site" class="ghost">Forget site</button></div>
    <button id="default-profile" class="wide action-light">Apply default dashboard profile</button>
   </section>
