@@ -95,17 +95,23 @@ function ahApplySettings(command){
    return spans.join('').replace(/\s+/g,' ').trim().slice(0,260);
   };
   const readAt=(x,y)=>{
-   const caret=document.caretPositionFromPoint?.(x,y);
-   const range=caret?null:document.caretRangeFromPoint?.(x,y);
-   let node=caret?.offsetNode||range?.startContainer;
-   if(node?.nodeType!==Node.TEXT_NODE){
-    const el=document.elementFromPoint(x,y);
-    if(!el||el.closest('input,textarea,select,[contenteditable=true],button,nav,[role=navigation],[data-ah-controls],#accesshub-extension-ruler,#accesshub-reading-magnifier'))return '';
-    const walk=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
-    node=walk.nextNode();
+   // elementsFromPoint sees through overlays; inspect actual text lines beneath the toolbar.
+   const excluded='[data-ah-controls],#accesshub-extension-ruler,#accesshub-reading-magnifier,input,textarea,select,[contenteditable=true],script,style,nav,[role=navigation]';
+   const hits=document.elementsFromPoint?.(x,y)||[document.elementFromPoint(x,y)].filter(Boolean);
+   for(const el of hits){
+    if(!(el instanceof Element)||el.closest(excluded))continue;
+    // Prefer text directly owned by the hit element; then try nearby text descendants.
+    const nodes=[...el.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE);
+    if(!nodes.length){
+     const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+     for(let node=walker.nextNode();node&&nodes.length<12;node=walker.nextNode())if(!node.parentElement?.closest(excluded))nodes.push(node);
+    }
+    for(const node of nodes){
+     const line=visibleLine(node,y);
+     if(line)return line;
+    }
    }
-   if(!node||node.nodeType!==Node.TEXT_NODE||node.parentElement?.closest('input,textarea,select,[contenteditable=true],script,style,nav,[role=navigation],[data-ah-controls],#accesshub-extension-ruler,#accesshub-reading-magnifier'))return '';
-   return visibleLine(node,y);
+   return '';
   };
   let frame=0,previous='';
   const update=()=>{
