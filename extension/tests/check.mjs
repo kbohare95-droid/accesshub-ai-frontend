@@ -19,8 +19,11 @@ assert(html.includes('id="cloud-consent"'));
 assert(html.includes('id="confirm-fill"'));
 assert(html.includes('id="draft-consent"'));
 assert(html.includes('id="theme"'));
-assert(read('page-actions.js').includes("[['size',90,150]"));
+assert(read('page-actions.js').includes("[['size',100,140]"));
 assert(!read('page-actions.js').includes('80,250'));
+assert(read("page-actions.js").includes("rulerY()"),"Ruler must track a fixed reading line");
+assert(!read("page-actions.js").includes("pointermove"),"Reading magnification must not depend on mouse movement");
+assert(read("page-actions.js").includes("window.addEventListener(\'scroll\',requestUpdate"),"Ruler must update when scrolling");
 for(const file of["core.js","page-actions.js","popup.js"]){
  new vm.Script(read(file),{filename:file});
  console.log("✓ Script syntax:",file);
