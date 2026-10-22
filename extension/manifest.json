@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "AccessHub AI – Site Accessibility",
+  "version": "0.1.0",
+  "description": "User-initiated reading and visual accessibility controls. No automatic browsing history collection.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_title": "AccessHub site tools",
+    "default_popup": "popup.html"
+  },
+  "icons": {}
+}
