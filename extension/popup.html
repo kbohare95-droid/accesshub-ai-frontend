@@ -34,7 +34,7 @@
    </div>
    <label class="stack">Line spacing <input id="spacing" type="range" min="1.1" max="2.5" value="1.5" step=".1"><output id="spacing-value">1.5</output></label>
    <label class="stack">Letter spacing <input id="letter" type="range" min="0" max="4" value="0" step=".5"><output id="letter-value">0</output></label>
-   <div class="actions"><button id="reset" class="ghost">Reset page</button><button id="save-site" class="ghost">Save site settings</button><button id="apply-site" class="ghost">Apply saved</button></div>
+   <div class="actions"><button id="reset" class="ghost">Reset page</button><button id="save-site" class="ghost">Save site settings</button><button id="apply-site" class="ghost">Apply saved</button><button id="forget-site" class="ghost">Forget site</button></div>
    <button id="default-profile" class="wide action-light">Apply default dashboard profile</button>
   </section>
   <section id="tab-read" class="panel" hidden>
@@ -42,7 +42,7 @@
    <button id="get-selection" class="wide action-light">Get selected text from this tab</button>
    <label class="stack" for="selected-text">Selected text (editable)</label>
    <textarea id="selected-text" rows="5" maxlength="12000" placeholder="Select and retrieve text, or paste it here"></textarea>
-   <div class="actions"><button class="ghost" id="copy-selection">Copy text</button><button class="ghost" id="save-reading">Save to reading list</button><button class="ghost" id="speak">Speak</button><button class="ghost" id="pause-speech">Pause</button><button class="ghost" id="stop-speech">Stop</button></div>
+   <div class="actions"><button class="ghost" id="copy-selection">Copy text</button><button class="ghost" id="save-reading">Save to reading list</button><button class="ghost" id="speak">Speak</button><button class="ghost" id="pause-speech">Pause</button><button class="ghost" id="resume-speech">Resume</button><button class="ghost" id="stop-speech">Stop</button></div>
    <label class="stack" for="language">AI response language</label><select id="language"><option value="en">English</option><option value="hi">Hindi</option></select>
    <label class="stack" for="operation">AI help</label><select id="operation"><option value="simplify">Simplify</option><option value="summarize">Summarize</option><option value="translate">Translate</option><option value="explain">Explain terms</option></select>
    <label class="consent"><input id="cloud-consent" type="checkbox"> I approve sending the selected text to Gemini for this request.</label>
