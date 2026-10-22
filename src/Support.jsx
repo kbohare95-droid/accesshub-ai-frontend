@@ -21,13 +21,48 @@ return <div className="hub-grid"><Box title="Accessibility profiles" subtitle="P
 <div className="hub-row"><Action outline onClick={()=>apply(prefs)}>Preview / Apply</Action><Action onClick={save}><Save size={16}/> Save new profile</Action><Action outline onClick={()=>{apply(defaults);setFontSize(100);setContrast("normal");setMotion("normal");setTheme("cream");setSimple(false);setLetterSpacing(0)}}>Reset</Action></div>
 </Box><div className="hub-stack"><Box title="Your saved profiles">{rows.map(p=><div className="hub-record" key={p.id}><button onClick={()=>{load(p);apply(p.settings)}}><strong>{p.name}{p.is_default?" · Default":""}</strong></button><button onClick={()=>makeDefault(p.id)}>Set default</button><button aria-label={"Delete "+p.name} onClick={async()=>{await db.from("accessibility_profiles").delete().eq("id",p.id);reload()}}><Trash2 size={16}/></button></div>)}{rows.length===0&&<p>No profiles saved yet. Start with reading or contrast settings.</p>}</Box><Box title="Import and export"><Action outline onClick={()=>saveFile("accessibility-profile.json",JSON.stringify({name,settings:prefs},null,2),"application/json")}><Download size={16}/> Export profile</Action><Field label="Import saved profile"><input type="file" accept=".json" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;try{const p=JSON.parse(await f.text());if(!p.settings||typeof p.settings!=="object")throw Error("Invalid profile JSON");load(p);notify("Imported to editor. Review before saving.")}catch(err){notify(err.message)}}}/></Field></Box></div></div>;
 }
-export function ExtensionCenter({notify}){
-const [status,setStatus]=useState("Not connected");return <div className="hub-grid"><Box title="Browser extension" subtitle="Permission-based support for a page you explicitly select.">
-<Notice type="info">The dashboard cannot read arbitrary websites or fill forms on its own. A separate installed browser extension and site permission are required.</Notice>
-<div className="hub-steps"><strong>Connection:</strong> {status}</div>
-<div className="hub-row"><Action outline onClick={()=>{setStatus("Not connected");notify("No trusted extension handshake is configured yet.")}}><RefreshCw size={16}/> Check connection</Action><Action outline onClick={()=>window.open("https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world","_blank","noopener,noreferrer")}><ExternalLink size={16}/> Extension installation guide</Action></div>
-<div className="hub-timeline"><p><strong>1.</strong> Download or install the AccessHub extension once a signed build is available.</p><p><strong>2.</strong> Grant permission only to pages you choose.</p><p><strong>3.</strong> Review selected text or form fields before sharing them.</p><p><strong>4.</strong> Approve each important action before any submission.</p></div>
-</Box><div className="hub-stack"><Box title="Supported now"><p>Reading and font controls within the dashboard, locally saved accessibility profiles, text-to-speech and optional cloud AI.</p></Box><Box title="Requires the extension"><p>Active tab context, site-specific overlays, external form navigation, selected text import and confirmed actions. These are not active until the extension is installed and linked.</p></Box><Box title="Privacy first"><p>No browsing history is collected automatically. Browser page access will always require user interaction.</p></Box></div></div>;
+export function ExtensionCenter({db,notify}){
+ const {rows,reload,error}=useRows(db,"extension_devices");
+ const [now,setNow]=useState(Date.now());
+ useEffect(()=>{const t=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(t)},[]);
+ const status=(device)=>{const age=now-new Date(device.last_seen).getTime();return age<10*60000?"Active within 10 minutes":age<24*3600000?"Last active today":"Not recently active"};
+ const ordered=[...rows].sort((a,b)=>new Date(b.last_seen)-new Date(a.last_seen));
+ const live=ordered.some(x=>now-new Date(x.last_seen).getTime()<10*60000);
+ async function unlink(id){
+  if(!window.confirm("Remove this device activity record? To disconnect permanently, also sign out inside the extension."))return;
+  const {error}=await db.from("extension_devices").delete().eq("id",id);
+  if(error)notify(error.message);else{reload();notify("Device record removed. Sign out of the extension to prevent future activity sync.")}
+ }
+ return <div className="hub-grid">
+  <Box title="Connect the AccessHub browser extension" subtitle="Chrome / Edge · Manifest V3 · Privacy-first, user-initiated page tools">
+   <div className="hub-steps"><strong>Account connection:</strong> {live?" Extension active recently":ordered.length?" Previously connected — not active recently":" No device activity yet"}</div>
+   <p className="hub-muted">A device appears here after you open the extension and sign in with the same AccessHub account. It is not a continuous browser tracking connection.</p>
+   <div className="hub-row"><Action outline onClick={()=>{reload();setNow(Date.now())}}><RefreshCw size={16}/> Refresh connection status</Action><Action outline onClick={()=>window.open("https://github.com/kbohare95-droid/accesshub-ai-frontend/archive/refs/heads/main.zip","_blank","noopener,noreferrer")}><Download size={16}/> Download extension source</Action></div>
+   <div className="hub-timeline"><p><strong>1.</strong> Download the repository ZIP and extract it to a permanent folder.</p>
+   <p><strong>2.</strong> Open <code>chrome://extensions</code> (or <code>edge://extensions</code>) in your browser and enable Developer mode.</p>
+   <p><strong>3.</strong> Click <strong>Load unpacked</strong> and select the extracted <code>extension</code> folder (the one containing <code>manifest.json</code>).</p>
+   <p><strong>4.</strong> Pin the AccessHub icon. Open a normal website and click it to use reading and visual tools.</p>
+   <p><strong>5.</strong> For Gemini and private sync, select the <strong>Account</strong> tab in the extension and sign in. Return here and select Refresh.</p></div>
+   <Notice>Only selected text and user-approved form drafts go to Supabase/Gemini. Local appearance tools work without signing in. The extension cannot control Chrome internal pages.</Notice>
+   <h3>Connected device activity</h3>
+   {error&&<Notice type="error">{error}</Notice>}
+   {ordered.map(item=><div key={item.id} className="hub-record"><div><strong>{item.device_name||"Browser extension"} · v{item.extension_version}</strong><p>{status(item)} · {new Date(item.last_seen).toLocaleString()}</p></div><button aria-label="Remove device activity record" className="iconbtn" onClick={()=>unlink(item.id)} title="Remove activity record"><Trash2 size={16}/></button></div>)}
+   {!ordered.length&&<p>No extension has checked in to this account yet.</p>}
+  </Box>
+  <div className="hub-stack">
+   <Box title="Available extension tools">
+    <p>Font size, contrast, dark mode, reduce motion, reading ruler, link highlighting, focus view, hide images, spacing adjustments, and site-specific saved preferences.</p>
+    <p>Select text to read aloud, simplify, summarize, translate or explain it using your own Gemini-backed account.</p>
+   </Box>
+   <Box title="Guided form assistance">
+    <p>Scan supported visible fields without reading filled values. Enter answers in the extension, preview each change and explicitly approve one field at a time.</p>
+    <p>Passwords, OTPs, payment fields and identity-number fields are excluded. No automatic final form submissions.</p>
+   </Box>
+   <Box title="Known limitations">
+    <p>Installed unpacked from GitHub, not published to Chrome Web Store yet. Dashboard shows activity by account, not a remote-control connection. Browser-side speech and page adjustments depend on supported browser APIs.</p>
+   </Box>
+  </div>
+ </div>;
 }
 export function HelpFeedback({db,notify}){
 const{rows,reload}=useRows(db,"feedback");const[category,setCategory]=useState("bug"),[page,setPage]=useState(""),[text,setText]=useState(""),[review,setReview]=useState(false);
