@@ -100,11 +100,11 @@ function ahApplySettings(command){
    let node=caret?.offsetNode||range?.startContainer;
    if(node?.nodeType!==Node.TEXT_NODE){
     const el=document.elementFromPoint(x,y);
-    if(!el||el.closest('input,textarea,select,[contenteditable=true],button,nav,[role=navigation],[data-ah-controls]'))return '';
+    if(!el||el.closest('input,textarea,select,[contenteditable=true],button,nav,[role=navigation],[data-ah-controls],#accesshub-extension-ruler,#accesshub-reading-magnifier'))return '';
     const walk=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
     node=walk.nextNode();
    }
-   if(!node||node.nodeType!==Node.TEXT_NODE||node.parentElement?.closest('input,textarea,select,[contenteditable=true],script,style,nav,[role=navigation],[data-ah-controls]'))return '';
+   if(!node||node.nodeType!==Node.TEXT_NODE||node.parentElement?.closest('input,textarea,select,[contenteditable=true],script,style,nav,[role=navigation],[data-ah-controls],#accesshub-extension-ruler,#accesshub-reading-magnifier'))return '';
    return visibleLine(node,y);
   };
   let frame=0,previous='';
