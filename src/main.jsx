@@ -10,6 +10,7 @@ import{DocumentStudio,FormGuide,SavedContent,TaskCenter}from"./Workflows";
 import{AccessibilityProfiles,ExtensionCenter,HelpFeedback,AccountPrivacy}from"./Support";
 import{Search,Globe,Type,Mic} from"lucide-react";
 import {uiText} from "./uiTranslations";
+import {useFullPageTranslation} from "./useFullPageTranslation";
 import "./styles.css";
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase=url&&key?createClient(url,key):null;
@@ -17,6 +18,7 @@ const routes=[["Overview",LayoutDashboard],["AI Assistant",Sparkles],["Reading W
 function App(){
 const [language,setLanguage]=useLanguage();
 const tr=text=>uiText(language,text);
+useFullPageTranslation(language);
 useEffect(()=>{const handler=e=>setMessage(e.detail);window.addEventListener("ah-notice",handler);return()=>window.removeEventListener("ah-notice",handler)},[]);
 const[quickSearch,setQuickSearch]=useState(""),commandRef=React.useRef(null);const[session,setSession]=useState(null),[ready,setReady]=useState(false),[view,setView]=useState("Overview"),[collapsed,setCollapsed]=useState(false),[email,setEmail]=useState(""),[password,setPassword]=useState(""),[name,setName]=useState(""),[signup,setSignup]=useState(false),[message,setMessage]=useState(""),[notes,setNotes]=useState([]),[docs,setDocs]=useState([]),[tasks,setTasks]=useState([]),[history,setHistory]=useState([]),[prompt,setPrompt]=useState(""),[answer,setAnswer]=useState(""),[busy,setBusy]=useState(false),[consent,setConsent]=useState(false),[noteTitle,setNoteTitle]=useState(""),[noteBody,setNoteBody]=useState(""),[textSize,setTextSize]=useState("normal"),[highContrast,setHighContrast]=useState(false),[reducedMotion,setReducedMotion]=useState(false);
 useEffect(()=>{if(!supabase){setReady(true);return}supabase.auth.getSession().then(({data})=>{setSession(data.session);setReady(true)});const{data:{subscription}}=supabase.auth.onAuthStateChange((_e,s)=>setSession(s));return()=>subscription.unsubscribe()},[]);
