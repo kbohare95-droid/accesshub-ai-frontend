@@ -43,7 +43,7 @@ return <><a className="hub-skip" href="#main-content">Skip to main content</a><d
 {view==="Notes & Saved"&&<SavedContent db={supabase} notify={setMessage}/>}
 {view==="Tasks & History"&&<TaskCenter db={supabase} notify={setMessage}/>}
 {view==="Accessibility Profiles"&&<AccessibilityProfiles db={supabase} notify={setMessage}/>}
-{view==="Browser Extension"&&<ExtensionCenter notify={setMessage}/>}
+{view==="Browser Extension"&&<ExtensionCenter db={supabase} notify={setMessage}/>}
 {view==="Help & Feedback"&&<HelpFeedback db={supabase} notify={setMessage}/>}
 {view==="Account & Privacy"&&<AccountPrivacy db={supabase} session={session} notify={setMessage}/>}
 </main><footer>AccessHub AI © 2026 · Built with accessibility in mind</footer></div></div></>;
