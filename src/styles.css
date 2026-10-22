@@ -91,3 +91,5 @@
 @media(max-width:1300px){.hub-command input{width:120px}.hub-extension-status{display:none}}
 @media(max-width:940px){.top-controls{gap:5px}.hub-command{display:none}.hub-top-select select{max-width:86px}}
 @media(max-width:600px){.hub-top-select{display:none}.top-controls{margin-left:auto}.hub-home-entry .hub-row>input{width:100%}.hub-home-entry{padding:17px}}
+
+.hub-compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}.hub-compare section{min-width:0;padding:14px;border:1px solid #dfd0bb;background:#fff;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere}.hub-compare strong{display:block;margin-bottom:8px}.hub-compare p{white-space:pre-wrap;color:#46382e}@media(max-width:690px){.hub-compare{grid-template-columns:1fr}}
