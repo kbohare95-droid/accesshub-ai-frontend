@@ -29,7 +29,7 @@ const assert=require('node:assert/strict');
  await page.evaluate(()=>{
   const sample=document.createElement('p');sample.id='ruler-fixture';
   sample.textContent='Reading accessibility line becomes bigger inside the golden ruler';
-  sample.style.cssText='position:fixed;top:calc(44vh + 9px);left:0;width:100%;text-align:center;font-size:18px;line-height:1.5;z-index:2';
+  sample.style.cssText='position:fixed;top:calc(44vh + 8px);left:0;width:100%;margin:0;text-align:center;font-size:18px;line-height:1.5;z-index:999';
   document.body.appendChild(sample);
  });
  await page.getByLabel('Reading ruler',{exact:true}).check();
