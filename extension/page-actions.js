@@ -43,11 +43,16 @@ function ahApplySettings(command){
  runtime.state=state;
  if(action==='reset'){delete root.dataset.accesshubPrefs;return state;}
  const set=(el,key,value)=>{let props=runtime.originals.get(el);if(!props){props={};runtime.originals.set(el,props)}props[key]={value:el.style.getPropertyValue(key),priority:el.style.getPropertyPriority(key),applied:''};el.style.setProperty(key,value,'important');props[key].applied=el.style.getPropertyValue(key)};
- const elements=[...document.querySelectorAll('body,body *')].filter(el=>el instanceof HTMLElement&&!['SCRIPT','STYLE','NOSCRIPT'].includes(el.tagName)&&!el.closest('[data-ah-controls]'));
+ const elements=[...document.querySelectorAll('body,body *')].filter(el=>el instanceof HTMLElement&&!['SCRIPT','STYLE','NOSCRIPT','SVG','PATH','OPTION'].includes(el.tagName)&&!el.closest('[data-ah-controls],#accesshub-extension-ruler,#accesshub-reading-magnifier'));
  // Measure all sizes before writing so nested elements do not multiply scaling.
  const measured=elements.map(el=>[el,parseFloat(getComputedStyle(el).fontSize)]);
  for(const [el,size] of measured){
-  if(state.size!==100&&Number.isFinite(size)&&size>=10&&size<=32&&!el.closest('button,nav,header,footer,[role=toolbar],[role=navigation]'))set(el,'font-size',Math.min(38,Math.max(size,size*state.size/100))+'px');
+  if(state.size!==100&&Number.isFinite(size)&&size>=10&&size<=36){
+   const control=el.matches('button,input,select,textarea,[role=button]');
+   const limit=control?22:38;
+   const enlarged=Math.max(size,Math.min(limit,size*state.size/100));
+   if(enlarged>size)set(el,'font-size',enlarged+'px');
+  }
   if(state.spacing!==base.spacing)set(el,'line-height',String(state.spacing));
   if(state.letter)set(el,'letter-spacing',state.letter+'px');
   if(state.fontFamily!=='original')set(el,'font-family',{sans:'Arial, sans-serif',serif:'Georgia, serif',mono:'monospace'}[state.fontFamily]);
@@ -87,7 +92,7 @@ function ahApplySettings(command){
     if(match){spans.push(text[i]);begun=true}
     else if(begun)break;
    }
-   return spans.join('').replace(/\\s+/g,' ').trim().slice(0,260);
+   return spans.join('').replace(/\s+/g,' ').trim().slice(0,260);
   };
   const readAt=(x,y)=>{
    const caret=document.caretPositionFromPoint?.(x,y);
