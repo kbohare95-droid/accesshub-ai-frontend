@@ -39,7 +39,7 @@ function ahApplySettings(command){
  document.getElementById('accesshub-extension-override')?.remove();
  document.getElementById('accesshub-extension-ruler')?.remove();
  document.getElementById('accesshub-reading-magnifier')?.remove();
- if(runtime.readingMove){document.removeEventListener('pointermove',runtime.readingMove);runtime.readingMove=null;}
+ if(runtime.readingCleanup){runtime.readingCleanup();runtime.readingCleanup=null;}
  runtime.state=state;
  if(action==='reset'){delete root.dataset.accesshubPrefs;return state;}
  const set=(el,key,value)=>{let props=runtime.originals.get(el);if(!props){props={};runtime.originals.set(el,props)}props[key]={value:el.style.getPropertyValue(key),priority:el.style.getPropertyPriority(key),applied:''};el.style.setProperty(key,value,'important');props[key].applied=el.style.getPropertyValue(key)};
@@ -61,33 +61,71 @@ function ahApplySettings(command){
  if(filters.length&&document.body)set(document.body,'filter',filters.join(' '));
  const style=document.createElement('style');style.id='accesshub-extension-override';
  style.textContent=[state.motion?'*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}':'',state.links?'a[href]{outline:2px solid #d28433!important;outline-offset:3px!important;text-decoration:underline!important}':'',state.images?'img,video,picture,canvas{visibility:hidden!important}':'',state.focus?'main,article,[role=main]{max-width:min(100%,850px)!important;margin-inline:auto!important}':''].join('\n');root.appendChild(style);
- if(state.ruler){const ruler=document.createElement('div');ruler.id='accesshub-extension-ruler';ruler.setAttribute('aria-hidden','true');ruler.style.cssText='pointer-events:none;position:fixed;z-index:2147483646;top:44vh;left:0;width:100%;height:2.6rem;border-block:2px solid #d39452;background:rgba(255,240,174,.15)';root.appendChild(ruler);
-  // Magnify the actual rendered text line directly within the reading ruler.
-  const lens=document.createElement('div');lens.id='accesshub-reading-magnifier';lens.setAttribute('aria-hidden','true');
-  lens.style.cssText='position:fixed;z-index:2147483647;pointer-events:none;display:none;left:0;right:0;top:44vh;min-height:2.8rem;padding:5px 16px;text-align:center;background:#fffdf5;color:#152447;border-block:2px solid #d39452;font:600 21px/1.4 Arial,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 12px #0003';
-  root.appendChild(lens);
-  runtime.readingMove=event=>{
-   const y=event.clientY;
-   const target=document.elementFromPoint(event.clientX,y);
-   if(!target||target.closest('input,textarea,select,[contenteditable=true]')){lens.style.display='none';return}
-   const range=document.caretRangeFromPoint?.(event.clientX,y);
-   const node=range?.startContainer;
-   if(!node||node.nodeType!==Node.TEXT_NODE){lens.style.display='none';return}
-   const content=node.textContent||'';
-   const offset=Math.min(range.startOffset,content.length);
-   // Browser layout rectangles identify the visual line, including wrapped paragraphs.
-   const chars=[];
-   for(let i=Math.max(0,offset-200);i<Math.min(content.length,offset+200);i++){
-    const r=document.createRange();r.setStart(node,i);r.setEnd(node,i+1);
-    const rect=r.getBoundingClientRect();
-    if(rect.height&&y>=rect.top-3&&y<=rect.bottom+3)chars.push(content[i]);
+ if(state.ruler){
+  // A fixed reading band: its contents come from the page at its vertical position, NOT the pointer.
+  const band=document.createElement('div');
+  band.id='accesshub-extension-ruler';
+  band.setAttribute('aria-hidden','true');
+  band.style.cssText='position:fixed;top:44vh;left:0;right:0;min-height:3.2rem;z-index:2147483646;pointer-events:none;border-block:2px solid #d39452;background:rgba(255,240,174,.18);box-sizing:border-box';
+  root.appendChild(band);
+  const lens=document.createElement('div');
+  lens.id='accesshub-reading-magnifier';
+  lens.setAttribute('aria-hidden','true');
+  lens.style.cssText='display:none;box-sizing:border-box;margin:auto;padding:9px 14px;max-width:min(96vw,1100px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;background:#fffdf5;color:#152447;font:600 22px/1.5 Arial,sans-serif;box-shadow:0 2px 12px #0002';
+  band.appendChild(lens);
+  const rulerY=()=>Math.min(innerHeight-8,Math.max(8,innerHeight*.44+25));
+  const visibleLine=(textNode,y)=>{
+   const text=textNode?.textContent||'';
+   if(!text.trim()||text.length>8000)return '';
+   const range=document.createRange();
+   const spans=[];let begun=false;
+   // Text ranges identify the visual row, including lines created by wrapping.
+   for(let i=0;i<Math.min(text.length,1500);i++){
+    range.setStart(textNode,i);range.setEnd(textNode,i+1);
+    const rect=range.getBoundingClientRect();
+    const match=rect.height>0&&y>=rect.top-4&&y<=rect.bottom+4;
+    if(match){spans.push(text[i]);begun=true}
+    else if(begun)break;
    }
-   const line=chars.join('').replace(/\\s+/g,' ').trim().slice(0,300);
-   if(!line){lens.style.display='none';return}
-   lens.textContent=line;lens.style.display='block';
-   lens.style.top=Math.max(0,Math.min(innerHeight-70,y-28))+'px';
+   return spans.join('').replace(/\\s+/g,' ').trim().slice(0,260);
   };
-  document.addEventListener('pointermove',runtime.readingMove,{passive:true});
+  const readAt=(x,y)=>{
+   const caret=document.caretPositionFromPoint?.(x,y);
+   const range=caret?null:document.caretRangeFromPoint?.(x,y);
+   let node=caret?.offsetNode||range?.startContainer;
+   if(node?.nodeType!==Node.TEXT_NODE){
+    const el=document.elementFromPoint(x,y);
+    if(!el||el.closest('input,textarea,select,[contenteditable=true],button,nav,[role=navigation]'))return '';
+    const walk=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+    node=walk.nextNode();
+   }
+   if(!node||node.nodeType!==Node.TEXT_NODE||node.parentElement?.closest('input,textarea,select,[contenteditable=true],script,style,nav,[role=navigation]'))return '';
+   return visibleLine(node,y);
+  };
+  let frame=0,previous='';
+  const update=()=>{
+   frame=0;
+   const y=rulerY();
+   // Probe the horizontal band, not the mouse position.
+   const positions=[.5,.35,.65,.2,.8].map(f=>innerWidth*f);
+   const lines=positions.map(x=>readAt(x,y)).filter(Boolean);
+   const line=lines.sort((a,b)=>b.length-a.length)[0]||'';
+   if(line!==previous){lens.textContent=line;previous=line}
+   lens.style.display=line?'block':'none';
+  };
+  const requestUpdate=()=>{if(!frame)frame=requestAnimationFrame(update)};
+  window.addEventListener('scroll',requestUpdate,{passive:true});
+  window.addEventListener('resize',requestUpdate,{passive:true});
+  window.addEventListener('wheel',requestUpdate,{passive:true});
+  window.addEventListener('keydown',requestUpdate);
+  runtime.readingCleanup=()=>{
+   window.removeEventListener('scroll',requestUpdate);
+   window.removeEventListener('resize',requestUpdate);
+   window.removeEventListener('wheel',requestUpdate);
+   window.removeEventListener('keydown',requestUpdate);
+   if(frame)cancelAnimationFrame(frame);
+  };
+  requestUpdate();
  }
  root.dataset.accesshubPrefs=JSON.stringify(state);
  runtime.observer=new MutationObserver(records=>{if(records.some(r=>r.addedNodes.length)){clearTimeout(runtime.timer);runtime.timer=setTimeout(()=>ahApplySettings({action:'set',settings:runtime.state}),80)}});
