@@ -37,8 +37,8 @@ export function useFullPageTranslation(language){
    if(!trimmed)return;
    const translated=uiText(language,trimmed);
    if(translated!==trimmed){
-    const leading=original.match(/^\\s*/)?.[0]||"";
-    const trailing=original.match(/\\s*$/)?.[0]||"";
+    const leading=original.match(/^\s*/)?.[0]||"";
+    const trailing=original.match(/\s*$/)?.[0]||"";
     const next=leading+translated+trailing;
     if(value!==next)setTranslated(node,key,next);
    }else if(translationCache.has(trimmed)){
