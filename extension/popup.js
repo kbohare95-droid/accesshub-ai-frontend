@@ -123,6 +123,17 @@ async function saveNote(){
  try{await core.saveNote("Extension insight: "+$("operation").selectedOptions[0].text,value);notice("Saved in your private AccessHub notes.")}
  catch(e){error(e)}
 }
+async function explainField(field){
+ if(!$("form-cloud-consent").checked)return notice("Approve sending this field label to Gemini first.",true);
+ try{
+  const label="Explain the purpose and expected answer for this form field, with one short example: "+field.label+". Input type: "+field.type+". Never request sensitive details.";
+  const d=await core.ai(label,"explain","en");
+  text($("form-explanation"),d.text||"No explanation returned");
+  $("form-explanation").hidden=false;
+  $("form-cloud-consent").checked=false;
+  notice("Field explanation ready. Verify instructions against the original form.");
+ }catch(e){error(e)}
+}
 function addAnswerField(field){
  const row=document.createElement("div");row.className="form-row";
  const label=document.createElement("label");label.className="stack";
@@ -146,7 +157,7 @@ function addAnswerField(field){
   text($("fill-preview"),"Review before filling ONE field on "+new URL(formScan.origin).hostname+": "+field.label+" → "+(input.value||"(empty)")+". This does not intentionally submit the form, but the webpage may react to input.");
   $("fill-preview").hidden=false;$("confirm-fill").hidden=false;
  });
- row.append(label,button);
+ const explain=document.createElement("button");explain.className="ghost fill-one";explain.textContent="Explain label with AI";explain.addEventListener("click",()=>explainField(field));row.append(label,button,explain);
  return row;
 }
 async function scan(){
@@ -220,6 +231,7 @@ $("save-site").addEventListener("click",saveSite);
 $("apply-site").addEventListener("click",applySite);
 $("default-profile").addEventListener("click",applyDefault);
 $("get-selection").addEventListener("click",selected);
+$("save-reading").addEventListener("click",async()=>{try{await core.saveReading($("selected-text").value);notice("Selected text saved to your private reading list.")}catch(e){error(e)}});
 $("copy-selection").addEventListener("click",()=>navigator.clipboard.writeText($("selected-text").value).then(()=>notice("Copied to clipboard")).catch(error));
 $("speak").addEventListener("click",speak);
 $("pause-speech").addEventListener("click",()=>{chrome.tts.pause();notice("Speech paused")});
