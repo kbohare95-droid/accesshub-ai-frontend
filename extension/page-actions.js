@@ -10,7 +10,7 @@ function ahApplySettings(command){
  if(action==='reset')state={...base};
  if(action==='set'){
   for(const k of ['contrast','dark','motion','links','images','ruler','focus','customColors'])if(typeof proposed[k]==='boolean')state[k]=proposed[k];
-  for(const [k,min,max] of [['size',90,150],['spacing',1.2,2.2],['letter',0,3],['hue',-180,180],['strength',0,100]])if(proposed[k]!==undefined&&Number.isFinite(Number(proposed[k])))state[k]=Math.min(max,Math.max(min,Number(proposed[k])));
+  for(const [k,min,max] of [['size',100,140],['spacing',1.2,2.2],['letter',0,3],['hue',-180,180],['strength',0,100]])if(proposed[k]!==undefined&&Number.isFinite(Number(proposed[k])))state[k]=Math.min(max,Math.max(min,Number(proposed[k])));
   for(const k of ['textColor','backgroundColor','linkColor'])if(/^#[0-9a-f]{6}$/i.test(proposed[k]||''))state[k]=proposed[k];
   if(['none','protan','deutan','tritan','custom','gray'].includes(proposed.colorMode))state.colorMode=proposed.colorMode;
   const themes={
@@ -31,7 +31,7 @@ function ahApplySettings(command){
   if(['original','sans','serif','mono'].includes(proposed.fontFamily))state.fontFamily=proposed.fontFamily;
  }
  if(action==='toggle'&&typeof base[command.key]==='boolean')state[command.key]=!state[command.key];
- if(action==='size')state.size=Math.max(90,Math.min(150,state.size+(Number(command.delta)||0)));
+ if(action==='size')state.size=Math.max(100,Math.min(140,state.size+(Number(command.delta)||0)));
  runtime.observer?.disconnect();clearTimeout(runtime.timer);
  // Restore only properties owned by AccessHub; preserve unrelated page edits.
  for(const [el,props] of runtime.originals){for(const [key,old] of Object.entries(props)){if(el.style.getPropertyValue(key)===old.applied){if(old.value)el.style.setProperty(key,old.value,old.priority);else el.style.removeProperty(key)}}}
@@ -47,7 +47,7 @@ function ahApplySettings(command){
  // Measure all sizes before writing so nested elements do not multiply scaling.
  const measured=elements.map(el=>[el,parseFloat(getComputedStyle(el).fontSize)]);
  for(const [el,size] of measured){
-  if(state.size!==100&&Number.isFinite(size))set(el,'font-size',size*state.size/100+'px');
+  if(state.size!==100&&Number.isFinite(size)&&size>=10&&size<=32&&!el.closest('button,nav,header,footer,[role=toolbar],[role=navigation]'))set(el,'font-size',Math.min(38,Math.max(size,size*state.size/100))+'px');
   if(state.spacing!==base.spacing)set(el,'line-height',String(state.spacing));
   if(state.letter)set(el,'letter-spacing',state.letter+'px');
   if(state.fontFamily!=='original')set(el,'font-family',{sans:'Arial, sans-serif',serif:'Georgia, serif',mono:'monospace'}[state.fontFamily]);
@@ -64,7 +64,7 @@ function ahApplySettings(command){
  if(state.ruler){const ruler=document.createElement('div');ruler.id='accesshub-extension-ruler';ruler.setAttribute('aria-hidden','true');ruler.style.cssText='pointer-events:none;position:fixed;z-index:2147483646;top:44vh;left:0;width:100%;height:2.6rem;border-block:2px solid #d39452;background:rgba(255,240,174,.15)';root.appendChild(ruler);
   // Magnify the actual rendered text line directly within the reading ruler.
   const lens=document.createElement('div');lens.id='accesshub-reading-magnifier';lens.setAttribute('aria-hidden','true');
-  lens.style.cssText='position:fixed;z-index:2147483647;pointer-events:none;display:none;left:0;right:0;top:44vh;min-height:2.8rem;padding:5px 16px;text-align:center;background:#fffdf5;color:#152447;border-block:2px solid #d39452;font:600 24px/1.4 Arial,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 12px #0003';
+  lens.style.cssText='position:fixed;z-index:2147483647;pointer-events:none;display:none;left:0;right:0;top:44vh;min-height:2.8rem;padding:5px 16px;text-align:center;background:#fffdf5;color:#152447;border-block:2px solid #d39452;font:600 21px/1.4 Arial,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 12px #0003';
   root.appendChild(lens);
   runtime.readingMove=event=>{
    const y=event.clientY;
