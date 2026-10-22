@@ -76,6 +76,15 @@ async function saveSite(){
   notice("Saved page preferences for this site. Apply them manually on future visits.");
  }catch(e){error(e)}
 }
+async function forgetSite(){
+ try{
+  const origin=tabOrigin();if(!origin)throw Error("Open a regular website first.");
+  const all=(await chrome.storage.local.get("ah_sites")).ah_sites||{};
+  delete all[origin];
+  await chrome.storage.local.set({ah_sites:all});
+  notice("Saved settings for this site have been cleared.");
+ }catch(e){error(e)}
+}
 async function applySite(){
  try{
   const origin=tabOrigin();const all=(await chrome.storage.local.get("ah_sites")).ah_sites||{};
@@ -229,12 +238,14 @@ for(const id of ["spacing","letter"])$(id).addEventListener("change",async e=>{
 });
 $("save-site").addEventListener("click",saveSite);
 $("apply-site").addEventListener("click",applySite);
+$("forget-site").addEventListener("click",forgetSite);
 $("default-profile").addEventListener("click",applyDefault);
 $("get-selection").addEventListener("click",selected);
 $("save-reading").addEventListener("click",async()=>{try{await core.saveReading($("selected-text").value);notice("Selected text saved to your private reading list.")}catch(e){error(e)}});
 $("copy-selection").addEventListener("click",()=>navigator.clipboard.writeText($("selected-text").value).then(()=>notice("Copied to clipboard")).catch(error));
 $("speak").addEventListener("click",speak);
 $("pause-speech").addEventListener("click",()=>{chrome.tts.pause();notice("Speech paused")});
+$("resume-speech").addEventListener("click",()=>{chrome.tts.resume();notice("Speech resumed")});
 $("stop-speech").addEventListener("click",()=>{chrome.tts.stop();notice("Speech stopped")});
 $("analyze").addEventListener("click",analyze);
 $("copy-answer").addEventListener("click",()=>navigator.clipboard.writeText($("ai-answer").textContent||"").then(()=>notice("AI result copied")).catch(error));
