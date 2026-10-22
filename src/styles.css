@@ -71,3 +71,23 @@
 .navitem{font-size:13px;min-height:43px}
 @media(max-width:1060px){.hub-grid{grid-template-columns:1fr}}
 @media(max-width:700px){.hub-phrases{grid-template-columns:1fr}.hub-box{padding:17px}.hub-row{gap:7px}.navitem{font-size:13px}.sidebar{overflow:auto}.hub-phrase{min-height:67px}}
+
+/* Dashboard command palette and quick-start actions */
+.top-controls{display:flex;align-items:center;gap:10px}
+.top-controls>button:not(.hub-extension-status){border:1px solid #e7d9ca;border-radius:9px;background:#fffaf3;color:#75553c;display:grid;place-items:center;width:37px;height:37px}
+.hub-command{position:relative;display:flex;align-items:center;gap:7px;border:1px solid #e6dacd;border-radius:11px;background:white;color:#9a7c64;padding:4px 10px}
+.hub-command input{border:0!important;outline:0!important;background:transparent!important;width:200px;margin:0!important;padding:8px 5px!important;font-size:12px!important}
+.hub-command-results{position:absolute;top:44px;right:0;min-width:225px;max-height:360px;overflow:auto;display:grid;z-index:12;background:white;box-shadow:0 10px 32px #21140726;border:1px solid #e1d2c4;border-radius:10px}
+.hub-command-results button{background:white;border:0;padding:11px 14px;text-align:left;color:#45372d}
+.hub-command-results button:hover{background:#f4e6d9}
+.hub-top-select{display:flex;align-items:center;gap:5px;color:#85664a}
+.hub-top-select select{padding:8px;color:#60452f;border:1px solid #e6d9ca;border-radius:8px;background:#fffcf8}
+.hub-extension-status{font-size:11px;background:#f4eee5;color:#77675d;padding:9px;border:1px solid #e5d7c9;border-radius:10px}
+.hub-home-entry{padding:24px;margin-bottom:25px;background:linear-gradient(135deg,#fff,#f8f0e5)}
+.hub-home-entry strong{font-size:19px}
+.hub-home-entry p{margin:7px 0}
+.hub-home-entry .hub-row>input{flex:1;min-width:180px;max-width:540px;margin:0;padding:13px;border:1px solid #e0d1bf;border-radius:10px}
+.hub-quick-link{padding:10px 13px;background:#fffdf8;color:#72543d;border:1px solid #e4d6c6;border-radius:10px;font-size:12px}
+@media(max-width:1300px){.hub-command input{width:120px}.hub-extension-status{display:none}}
+@media(max-width:940px){.top-controls{gap:5px}.hub-command{display:none}.hub-top-select select{max-width:86px}}
+@media(max-width:600px){.hub-top-select{display:none}.top-controls{margin-left:auto}.hub-home-entry .hub-row>input{width:100%}.hub-home-entry{padding:17px}}
