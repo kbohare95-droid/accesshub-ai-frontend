@@ -119,14 +119,18 @@ function ahApplySettings(command){
    lens.style.display=line?'block':'none';
   };
   const requestUpdate=()=>{if(!frame)frame=requestAnimationFrame(update)};
+  document.addEventListener('scroll',requestUpdate,{passive:true,capture:true});
   window.addEventListener('scroll',requestUpdate,{passive:true});
   window.addEventListener('resize',requestUpdate,{passive:true});
   window.addEventListener('wheel',requestUpdate,{passive:true});
+  window.addEventListener('touchmove',requestUpdate,{passive:true});
   window.addEventListener('keydown',requestUpdate);
   runtime.readingCleanup=()=>{
+   document.removeEventListener('scroll',requestUpdate,true);
    window.removeEventListener('scroll',requestUpdate);
    window.removeEventListener('resize',requestUpdate);
    window.removeEventListener('wheel',requestUpdate);
+   window.removeEventListener('touchmove',requestUpdate);
    window.removeEventListener('keydown',requestUpdate);
    if(frame)cancelAnimationFrame(frame);
   };
