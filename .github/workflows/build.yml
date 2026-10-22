@@ -1,15 +1,19 @@
-name: Build frontend
+name: Verify AccessHub
 on:
   push:
     branches: [main]
   pull_request:
 jobs:
-  build:
+  frontend-and-extension:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install
-      - run: npm run build
+      - name: Verify extension manifest, JavaScript and safe form behavior
+        run: node extension/tests/check.mjs
+      - name: Install frontend dependencies
+        run: npm install
+      - name: Build frontend
+        run: npm run build
