@@ -43,7 +43,7 @@ const payment=new MockInput("text","Card number",{name:"cc-number"});
 const otp=new MockInput("text","OTP",{name:"otp"});
 const email=new MockInput("email","Email address",{name:"email"});
 const elements=[normal,sensitive,payment,otp,email];
-const mockDocument={querySelectorAll:()=>elements};
+const mockDocument={title:"Test page",querySelectorAll:()=>elements};
 const mockContext=vm.createContext({
  document:mockDocument,HTMLElement:MockElement,HTMLInputElement:MockInput,HTMLTextAreaElement:MockArea,HTMLSelectElement:MockSelect,
  getComputedStyle:()=>({visibility:"visible"}),crypto:{randomUUID:()=>String(Math.random())},
