@@ -1,1 +1,85 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>AccessHub Extension</title><style>body{font:14px system-ui;background:#fffaf4;color:#3d3028;width:300px;padding:16px}h1{font-size:21px}button{padding:11px 12px;border-radius:9px;border:1px solid #ae896b;background:#f8ebdf;color:#4c3327;cursor:pointer;width:100%;margin:5px 0;text-align:left}button:focus-visible{outline:3px solid #1c7da5}p{line-height:1.5}textarea{width:100%;min-height:85px}#status{min-height:22px}</style></head><body><h1>AccessHub <span style="color:#a87a57">AI</span></h1><p>Adjust only this tab, with your permission.</p><button id="contrast">Toggle high contrast</button><button id="bigger">Increase text size</button><button id="smaller">Decrease text size</button><button id="quiet">Reduce animation</button><button id="selected">Read selected text</button><label>Selected text<textarea id="output" readonly placeholder="Select text on a page, then click Read selected text."></textarea></label><button id="copy">Copy text</button><button id="reset">Reset this tab</button><p id="status" role="status" aria-live="polite"></p><p><a href="https://accesshub-ai-frontend.vercel.app" target="_blank" rel="noopener noreferrer">Open AccessHub dashboard ↗</a></p><script src="popup.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AccessHub AI — Browser Assistant</title><link rel="stylesheet" href="popup.css"></head>
+<body>
+<div class="shell">
+ <header class="head">
+  <div class="symbol" aria-hidden="true">✦</div>
+  <div><h1>AccessHub <span>AI</span></h1><p>Accessible web, your way</p></div>
+  <span class="version">v0.2</span>
+ </header>
+ <div class="site"><span class="green" aria-hidden="true"></span><span id="site-name">Current tab</span><span class="status-tag" id="connection">Local tools</span></div>
+ <div id="alert" class="alert" role="status" aria-live="polite" hidden></div>
+ <nav class="tabs" aria-label="Extension features">
+  <button data-tab="page" aria-selected="true">Page</button>
+  <button data-tab="read" aria-selected="false">Read &amp; AI</button>
+  <button data-tab="forms" aria-selected="false">Forms</button>
+  <button data-tab="account" aria-selected="false">Account</button>
+ </nav>
+ <main>
+  <section id="tab-page" class="panel">
+   <h2>Make this page easier</h2>
+   <p class="muted">Changes only happen when you press a button. Sites aren't scanned automatically.</p>
+   <div class="two">
+    <button class="control" id="larger"><strong>A＋</strong><span>Larger text</span></button>
+    <button class="control" id="smaller"><strong>A−</strong><span>Smaller text</span></button>
+    <button class="control" data-toggle="contrast" aria-pressed="false"><strong>◐</strong><span>High contrast</span></button>
+    <button class="control" data-toggle="dark" aria-pressed="false"><strong>☾</strong><span>Dark page</span></button>
+    <button class="control" data-toggle="motion" aria-pressed="false"><strong>▦</strong><span>Reduce motion</span></button>
+    <button class="control" data-toggle="links" aria-pressed="false"><strong>↗</strong><span>Mark links</span></button>
+    <button class="control" data-toggle="ruler" aria-pressed="false"><strong>═</strong><span>Reading ruler</span></button>
+    <button class="control" data-toggle="focus" aria-pressed="false"><strong>◎</strong><span>Focus view</span></button>
+    <button class="control" data-toggle="images" aria-pressed="false"><strong>▧</strong><span>Hide images</span></button>
+   </div>
+   <label class="stack">Line spacing <input id="spacing" type="range" min="1.1" max="2.5" value="1.5" step=".1"><output id="spacing-value">1.5</output></label>
+   <label class="stack">Letter spacing <input id="letter" type="range" min="0" max="4" value="0" step=".5"><output id="letter-value">0</output></label>
+   <div class="actions"><button id="reset" class="ghost">Reset page</button><button id="save-site" class="ghost">Save site settings</button><button id="apply-site" class="ghost">Apply saved</button></div>
+   <button id="default-profile" class="wide action-light">Apply default dashboard profile</button>
+  </section>
+  <section id="tab-read" class="panel" hidden>
+   <h2>Understand selected text</h2><p class="muted">First select text on a webpage, then click “Get selection”. Nothing is sent until you approve an AI request.</p>
+   <button id="get-selection" class="wide action-light">Get selected text from this tab</button>
+   <label class="stack" for="selected-text">Selected text (editable)</label>
+   <textarea id="selected-text" rows="5" maxlength="12000" placeholder="Select and retrieve text, or paste it here"></textarea>
+   <div class="actions"><button class="ghost" id="copy-selection">Copy text</button><button class="ghost" id="speak">Speak</button><button class="ghost" id="pause-speech">Pause</button><button class="ghost" id="stop-speech">Stop</button></div>
+   <label class="stack" for="language">AI response language</label><select id="language"><option value="en">English</option><option value="hi">Hindi</option></select>
+   <label class="stack" for="operation">AI help</label><select id="operation"><option value="simplify">Simplify</option><option value="summarize">Summarize</option><option value="translate">Translate</option><option value="explain">Explain terms</option></select>
+   <label class="consent"><input id="cloud-consent" type="checkbox"> I approve sending the selected text to Gemini for this request.</label>
+   <button id="analyze" class="wide primary">Analyze with Gemini</button>
+   <div id="answer-panel" hidden><h3>AI result · check against the source</h3><div id="ai-answer" class="answer"></div><div class="actions"><button id="copy-answer" class="ghost">Copy result</button><button id="save-note" class="ghost">Save to AccessHub notes</button></div></div>
+  </section>
+  <section id="tab-forms" class="panel" hidden>
+   <h2>Guided form assistance</h2><p class="muted">Scan visible, non-sensitive fields only. No answers are read from the webpage; nothing is submitted.</p>
+   <button id="scan-form" class="wide action-light">Scan current form</button>
+   <div id="form-summary" class="tip" hidden></div>
+   <div id="form-fields" class="fields"></div>
+   <div id="fill-preview" class="tip" hidden></div>
+   <button id="confirm-fill" class="wide primary" hidden>Confirm filling this ONE field</button>
+   <label class="consent"><input type="checkbox" id="draft-consent"> I approve saving my form draft to my AccessHub account.</label>
+   <button class="wide ghost" id="save-draft">Save reviewed draft</button>
+   <p class="muted">External page scripts may respond to typed changes. Review the page before filling; never use this tool for passwords, payments or OTPs.</p>
+  </section>
+  <section id="tab-account" class="panel" hidden>
+   <h2>Connect to your workspace</h2>
+   <div id="signin-box">
+    <p class="muted">Use the same account as your AccessHub dashboard. Your password goes directly to Supabase Auth, not the open webpage.</p>
+    <form id="login-form">
+     <label class="stack" for="email">Email</label><input id="email" type="email" autocomplete="username" required placeholder="you@example.com">
+     <label class="stack" for="password">Password</label><input id="password" type="password" autocomplete="current-password" required placeholder="Account password">
+     <button id="signin" class="wide primary" type="submit">Sign in to AccessHub</button>
+    </form>
+   </div>
+   <div id="signedin-box" hidden>
+    <p class="muted">Signed in as</p><strong id="signed-email"></strong>
+    <div class="tip"><strong>Dashboard connection:</strong> <span id="last-sync">Not synced yet</span><p class="muted">Your dashboard will recognize this device after a successful sync. It does not receive browsing history.</p></div>
+    <button id="sync-now" class="wide action-light">Check connection / sync now</button>
+    <button id="logout" class="wide ghost">Sign out from this extension</button>
+   </div>
+   <a class="link" href="https://accesshub-ai-frontend.vercel.app" target="_blank" rel="noopener noreferrer">Open AccessHub dashboard ↗</a>
+  </section>
+ </main>
+ <footer><span>Local controls work without login</span><span id="state-foot">● Ready</span></footer>
+</div>
+<script src="core.js" defer></script><script src="page-actions.js" defer></script><script src="popup.js" defer></script>
+</body></html>
