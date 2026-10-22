@@ -112,6 +112,15 @@ const AccessHubCore=(()=>{
   await authenticated("/rest/v1/notes",{method:"POST",body:{user_id:s.user.id,title:String(title).slice(0,150),body:String(body).slice(0,100000)}});
   await ping();
  }
+ async function saveReading(selected){
+  const s=await session();if(!s)throw Error("Please sign in");
+  const body=String(selected||"").trim().slice(0,40000);
+  if(!body)throw Error("Select some text first");
+  await authenticated("/rest/v1/saved_items",{method:"POST",body:{
+    user_id:s.user.id,kind:"reading",title:body.slice(0,100),body
+  }});
+  await ping();
+ }
  async function profiles(){
   const s=await session();if(!s)throw Error("Please sign in");
   return await authenticated("/rest/v1/accessibility_profiles?select=name,settings,is_default&is_default=eq.true&order=updated_at.desc&limit=1");
@@ -125,5 +134,5 @@ const AccessHubCore=(()=>{
   }});
   await ping();
  }
- return {BASE,DASHBOARD,init,session,login,logout,authenticated,ping,ai,saveNote,profiles,saveDraft,deviceId};
+ return {BASE,DASHBOARD,init,session,login,logout,authenticated,ping,ai,saveNote,saveReading,profiles,saveDraft,deviceId};
 })();
